@@ -30,7 +30,6 @@ apply_updates() {
     sudo apt update
     sudo apt upgrade -y
     sudo apt full-upgrade -y
-    sudo pop-upgrade release upgrade
     sudo apt autoremove -y
     sudo apt autoclean -y
     # Flatpak updates
@@ -51,7 +50,8 @@ apply_updates() {
     fi
     # Recovery partition update
     if command -v pop-upgrade >/dev/null 2>&1; then
-        echo "Updating recovery partition..."
+        echo "Updating system & recovery partition..."
+        sudo pop-upgrade release upgrade
         sudo pop-upgrade recovery upgrade from-release
     fi
     echo -e "${GREEN}Updates completed successfully.${NC}"
