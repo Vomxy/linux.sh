@@ -318,21 +318,83 @@ install_and_configure_apps() {
                     break
                     ;;
                 "Grayjay")
-                    echo "Installing Grayjay (privacy-focused media aggregator)..."
-                    if [ -f "$HOME/Grayjay/Grayjay.Desktop-linux-x64/Grayjay" ]; then
-                        echo "Grayjay already installed."
-                    else
-                        wget "https://updater.grayjay.app/Apps/Grayjay.Desktop/Grayjay.Desktop-linux-x64.zip" -O ~/Grayjay.zip
-                        mkdir -p ~/Grayjay
-                        unzip ~/Grayjay.zip -d ~/Grayjay
-                        chmod +x ~/Grayjay/Grayjay.Desktop-linux-x64/Grayjay
-                        create_desktop_entry "~/Grayjay/Grayjay.Desktop-linux-x64/Grayjay" "Grayjay"
-                        rm ~/Grayjay.zip
-                        echo "Grayjay installed. Launch it to configure your media sources."
-                    fi
-                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
-                    break
-                    ;;
+    echo "Installing Grayjay (privacy-focused media aggregator)..."
+    install_dir="$HOME/.local/opt/Grayjay"
+
+    # Check if Grayjay is already installed and prompt to overwrite
+    if [ -f "$install_dir/Grayjay" ]; then
+        read -p "Grayjay is already installed at $install_dir. Overwrite? (y/N): " overwrite
+        if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+            echo "Installation skipped."
+            [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+            break
+        fi
+        rm -rf "$install_dir"
+    fi
+
+    # Download the zip file to /tmp
+    wget "https://updater.grayjay.app/Apps/Grayjay.Desktop/Grayjay.Desktop-linux-x64.zip" -O /tmp/Grayjay.zip || {
+        echo "Download failed."
+        [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+        break
+    }
+
+    # Extract to a temporary directory
+    unzip /tmp/Grayjay.zip -d /tmp/Grayjay-tmp || {
+        echo "Extraction failed."
+        rm -f /tmp/Grayjay.zip
+        [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+        break
+    }
+
+    # Move contents to user-specific install_dir
+    version_dir=$(ls /tmp/Grayjay-tmp | grep "Grayjay.Desktop-linux-x64")
+    mkdir -p "$install_dir"
+    mv /tmp/Grayjay-tmp/"$version_dir"/* "$install_dir" || {
+        echo "Failed to move files to $install_dir."
+        rm -rf /tmp/Grayjay-tmp /tmp/Grayjay.zip
+        [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+        break
+    }
+
+    # Set executable permissions
+    chmod +x "$install_dir/Grayjay" || {
+        echo "Failed to set permissions."
+        [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+        break
+    }
+
+    # Create launcher script in ~/.local/bin
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/grayjay" << EOL
+#!/bin/bash
+cd $install_dir
+./Grayjay
+EOL
+    chmod +x "$HOME/.local/bin/grayjay"
+
+    # Remove any old system-wide launcher
+    sudo rm -f /usr/local/bin/grayjay
+
+    # Create desktop entry
+    mkdir -p "$HOME/.local/share/applications"
+    cat > "$HOME/.local/share/applications/grayjay.desktop" << EOL
+[Desktop Entry]
+Name=Grayjay
+Exec=$HOME/.local/bin/grayjay
+Icon=$install_dir/grayjay.png
+Type=Application
+Terminal=false
+EOL
+    chmod +x "$HOME/.local/share/applications/grayjay.desktop"
+
+    # Clean up temporary files
+    rm -rf /tmp/Grayjay.zip /tmp/Grayjay-tmp || echo "Warning: Could not clean up temporary files."
+
+    echo "Grayjay installed in $install_dir. Launch it from the menu or type 'grayjay'."
+    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+    break
+    ;;
                 "Jitsi Meet")
                     echo "Installing Jitsi Meet (open-source video conferencing)..."
                     if flatpak list | grep -q org.jitsi.jitsi-meet; then
@@ -443,10 +505,9 @@ install_and_configure_apps() {
                     if dpkg -l | grep -q signal-desktop; then
                         echo "Signal already installed."
                     else
-                        wget -O- https://updates.signal.org/desktop/apt/keys.asc | sudo apt-key add -
-                        echo "deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main" | sudo tee /etc/apt/sources.list.d/signal-xenial.list
-                        sudo apt update
-                        sudo apt install -y signal-desktop
+                        wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor | sudo tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+                        echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' | sudo tee /etc/apt/sources.list.d/signal-xenial.list
+                        sudo apt update && sudo apt install -y signal-desktop-beta
                         echo "Signal installed. Launch it and link it to your phone for encrypted messaging."
                     fi
                     [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
