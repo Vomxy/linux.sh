@@ -421,22 +421,210 @@ EOL
                     break
                     ;;
                 "Jitsi Meet")
-                    log_message "Installing Jitsi Meet..."
+                    echo "Installing Jitsi Meet (open-source video conferencing)..."
                     if flatpak list | grep -q org.jitsi.jitsi-meet; then
-                        log_message "Jitsi Meet already installed."
+                        echo "Jitsi Meet already installed."
                     else
-                        flatpak install -y flathub org.jitsi.jitsi-meet || log_message "${RED}Jitsi Meet installation failed.${NC}"
-                        log_message "Jitsi Meet installed. Start or join a meeting."
+                        flatpak install -y flathub org.jitsi.jitsi-meet
+                        echo "Jitsi Meet installed. Start a meeting or join one directly from the app."
                     fi
                     [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
                     break
                     ;;
-                # Add other apps similarly...
+                "KeepassXC")
+                    echo "Installing KeepassXC (local password manager)..."
+                    if dpkg -l | grep -q keepassxc; then
+                        echo "KeepassXC already installed."
+                    else
+                        sudo apt install -y keepassxc
+                        echo "KeepassXC installed. Launch it, create a new database, and set a strong master password."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "LibreWolf")
+                    echo "Installing LibreWolf (privacy-enhanced Firefox fork)..."
+                    if command -v librewolf >/dev/null 2>&1; then
+                        echo "LibreWolf already installed."
+                    else
+                        sudo apt install -y software-properties-common
+                        sudo add-apt-repository -y ppa:intika/librewolf
+                        sudo apt update
+                        sudo apt install -y librewolf
+                        wget "https://raw.githubusercontent.com/vomxy/user.js/master/user.js" -O ~/librewolf.user.js
+                        profile_dir=$(find ~/.librewolf -maxdepth 1 -type d -name "*.default-release" | head -n 1)
+                        if [ -n "$profile_dir" ]; then
+                            cp ~/librewolf.user.js "$profile_dir/user.js"
+                            echo "Privacy-focused user.js applied to $profile_dir."
+                        fi
+                        rm ~/librewolf.user.js
+                        echo "LibreWolf installed with enhanced privacy settings."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Nextcloud Client")
+                    echo "Installing Nextcloud Client (self-hosted cloud sync)..."
+                    if dpkg -l | grep -q nextcloud-desktop; then
+                        echo "Nextcloud Client already installed."
+                    else
+                        sudo apt install -y nextcloud-desktop
+                        echo "Nextcloud Client installed. Launch it and connect to your Nextcloud server."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Obsidian")
+                    echo "Installing Obsidian (Markdown-based note-taking)..."
+                    if flatpak list | grep -q md.obsidian.Obsidian; then
+                        echo "Obsidian already installed."
+                    else
+                        flatpak install -y flathub md.obsidian.Obsidian
+                        echo "Obsidian installed. Launch it, create a local vault, and disable telemetry in settings."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Proton Pass")
+                    echo "Installing Proton Pass (encrypted password manager)..."
+                    if dpkg -l | grep -q proton-pass; then
+                        echo "Proton Pass already installed."
+                    else
+                        wget "https://proton.me/download/pass/linux/proton-pass_1.29.3_amd64.deb" -O ~/proton-pass.deb
+                        sudo dpkg -i ~/proton-pass.deb
+                        sudo apt-get install -f -y
+                        rm ~/proton-pass.deb
+                        echo "Proton Pass installed. Launch it and sign in with your Proton account."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Proton VPN")
+                    echo "Installing Proton VPN (privacy-focused VPN)..."
+                    if dpkg -l | grep -q protonvpn; then
+                        echo "Proton VPN already installed."
+                    else
+                        wget "https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.3_all.deb" -O ~/protonvpn.deb
+                        sudo dpkg -i ~/protonvpn.deb
+                        sudo apt update
+                        sudo apt install -y protonvpn
+                        rm ~/protonvpn.deb
+                        echo "Proton VPN installed. Launch it, log in, and enable the kill switch."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Shortwave")
+                    echo "Installing Shortwave (modern internet radio)..."
+                    if flatpak list | grep -q de.haeckerfelix.Shortwave; then
+                        echo "Shortwave already installed."
+                    else
+                        flatpak install -y flathub de.haeckerfelix.Shortwave
+                        echo "Shortwave installed. Launch it and add your favorite stations."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Signal")
+                    echo "Installing Signal (secure messaging)..."
+                    if dpkg -l | grep -q signal-desktop; then
+                        echo "Signal already installed."
+                    else
+                        wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor | sudo tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+                        echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' | sudo tee /etc/apt/sources.list.d/signal-xenial.list
+                        sudo apt update && sudo apt install -y signal-desktop-beta
+                        echo "Signal installed. Launch it and link it to your phone for encrypted messaging."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Standard Notes")
+                    echo "Installing Standard Notes (encrypted notes)..."
+                    if flatpak list | grep -q org.standardnotes.standardnotes; then
+                        echo "Standard Notes already installed."
+                    else
+                        flatpak install -y flathub org.standardnotes.standardnotes
+                        echo "Standard Notes installed. Sign in to sync your encrypted notes."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Syncthing")
+                    echo "Installing Syncthing (decentralized file sync)..."
+                    if dpkg -l | grep -q syncthing; then
+                        echo "Syncthing already installed."
+                    else
+                        sudo apt install -y syncthing
+                        sudo systemctl enable syncthing@$USER.service
+                        sudo systemctl start syncthing@$USER.service
+                        echo "Syncthing installed and started. Access it at http://localhost:8384 to configure sync."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Terminator")
+                    echo "Installing Terminator (advanced terminal emulator)..."
+                    if dpkg -l | grep -q terminator; then
+                        echo "Terminator already installed."
+                    else
+                        sudo apt install -y terminator
+                        echo "Terminator installed. Right-click to split terminals or customize as needed."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Thunderbird")
+                    echo "Installing Thunderbird (email client with privacy options)..."
+                    if dpkg -l | grep -q thunderbird; then
+                        echo "Thunderbird already installed."
+                    else
+                        sudo apt install -y thunderbird
+                        echo "Thunderbird installed. Configure your email account and disable telemetry in settings."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "Tor Browser")
+                    echo "Installing Tor Browser (anonymous browsing)..."
+                    if dpkg -l | grep -q torbrowser-launcher; then
+                        echo "Tor Browser already installed."
+                    else
+                        sudo apt install -y torbrowser-launcher
+                        torbrowser-launcher & # Launch to download and install
+                        echo "Tor Browser installed. Launch it and set security level to 'Safest'."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "VLC")
+                    echo "Installing VLC (versatile media player)..."
+                    if dpkg -l | grep -q vlc; then
+                        echo "VLC already installed."
+                    else
+                        sudo apt install -y vlc
+                        echo "VLC installed. Disable network access in preferences for privacy."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
+                "VScodium")
+                    echo "Installing VScodium (open-source code editor)..."
+                    if flatpak list | grep -q com.vscodium.codium; then
+                        echo "VScodium already installed."
+                    else
+                        flatpak install -y flathub com.vscodium.codium
+                        mkdir -p ~/.config/VSCodium/User
+                        echo '{"telemetry.enableTelemetry": false}' > ~/.config/VSCodium/User/settings.json
+                        echo "VScodium installed with telemetry disabled. Add extensions as needed."
+                    fi
+                    [ $SILENT_MODE -eq 0 ] && read -p "Press Enter to continue..."
+                    break
+                    ;;
                 "Back to Main Menu")
                     return
                     ;;
                 *)
-                    log_message "${RED}Invalid option.${NC}"
+                    echo -e "${RED}Invalid option.${NC}"
                     ;;
             esac
         done
